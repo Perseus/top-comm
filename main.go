@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -164,6 +165,8 @@ func main() {
 		return
 	}
 
+	tcpAbortChannel := make(chan bool)
+
 	go func() {
 		recvBuf := make([]byte, 2)
 
@@ -181,12 +184,14 @@ func main() {
 				_, err := conn.Read(packetData)
 
 				if err != nil {
+					if err == io.EOF {
+						tcpAbortChannel <- true
+					}
 					fmt.Println(err)
 				}
 
 				rpk := packet.CreateReadPacket(packetData)
-
-				fmt.Println(rpk)
+				handleCommandsFromGate(rpk)
 			}
 		}
 	}()
@@ -221,4 +226,11 @@ func main() {
 	}(tcpPacketChannel, conn)
 
 	wg.Wait()
+
+	for val := range tcpAbortChannel {
+		if val {
+			fmt.Println("Closing application because TCP Aborted")
+			return
+		}
+	}
 }

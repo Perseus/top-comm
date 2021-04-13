@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"os"
 	"strconv"
 
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
+	"github.com/bwmarrin/discordgo"
 	"github.com/fatih/color"
 	"github.com/mitchellh/mapstructure"
 	"github.com/perseus/top-comm/config"
@@ -37,7 +39,6 @@ func handleMessages(chn chan types.Message, sqsClient *sqs.Client, tcpPacketChn 
 
 		json.Unmarshal([]byte(parsedString), &result)
 
-		fmt.Println(*val.Body, result)
 		if action, ok := config.SupportedActions[result.ActionName]; ok {
 			color.HiGreen("[Message] Processing action - %s", result.ActionName)
 			go func() {
@@ -67,6 +68,13 @@ func handleAction(actionId uint16, payload interface{}, chn chan packet.WPacket)
 		wpk.WriteShort(uint16(data.AccepterCharId))
 		wpk.WriteShort(uint16(data.ApplierCharId))
 		wpk.WriteShort(uint16(data.GuildId))
+	case 8011:
+		var data config.RejectPlayerFromGuildPayload
+		mapstructure.Decode(payload, &data)
+
+		wpk.WriteShort(uint16(data.RejecterCharId))
+		wpk.WriteShort(uint16(data.ApplierCharId))
+		wpk.WriteShort(uint16(data.GuildId))
 	}
 
 	chn <- wpk
@@ -76,5 +84,28 @@ func writePacketHandler(chn chan packet.WPacket, conn *net.TCPConn) {
 	for val := range chn {
 		packetInBytes := val.BuildPacket()
 		conn.Write(packetInBytes)
+	}
+}
+
+func handleCommandsFromGate(rpk packet.RPacket) {
+	dg, dgErr := discordgo.New()
+
+	if dgErr != nil {
+		fmt.Println("DG err", dgErr)
+	}
+
+	if rpk.GetCommand() == 1514 {
+		charName := rpk.ReadString()
+		chatChannel := rpk.ReadString()
+		chatContent := rpk.ReadString()
+		webhookId := os.Getenv("playerChatWebhookId")
+		webhookToken := os.Getenv("playerChatWebhookToken")
+
+		dg.WebhookExecute(webhookId, webhookToken, false, &discordgo.WebhookParams{
+			Content:  chatContent,
+			Username: "[" + chatChannel + "] " + charName,
+		})
+
+		fmt.Println(charName, chatChannel, chatContent, len(chatContent))
 	}
 }

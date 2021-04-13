@@ -6,6 +6,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.3.2 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.1.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.3.1 // indirect
+	github.com/bwmarrin/discordgo v0.23.2 // indirect
 	github.com/cosmtrek/air v1.21.2 // indirect
 	github.com/creack/pty v1.1.11 // indirect
 	github.com/fatih/color v1.10.0 // indirect

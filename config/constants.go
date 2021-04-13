@@ -15,6 +15,10 @@ var (
 			name:     "AcceptPlayerInGuild",
 			packetId: 8010,
 		},
+		{
+			name:     "RejectPlayerFromGuild",
+			packetId: 8011,
+		},
 	}
 )
 
@@ -40,6 +44,12 @@ var (
 
 type AcceptPlayerInGuildPayload struct {
 	AccepterCharId int
+	ApplierCharId  int
+	GuildId        int
+}
+
+type RejectPlayerFromGuildPayload struct {
+	RejecterCharId int
 	ApplierCharId  int
 	GuildId        int
 }

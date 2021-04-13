@@ -169,7 +169,7 @@ func (rpk *RPacket) ReadString() string {
 	// read the data from the offset to offset + stringLength
 	// convert it to a string and then return
 	if remainingLength >= int(stringLength) {
-		result = string(rpk.packet[rpk.offset : rpk.offset+uint32(stringLength)])
+		result = string(rpk.packet[rpk.offset : rpk.offset+uint32(stringLength)-1])
 		rpk.offset += uint32(stringLength)
 	}
 
